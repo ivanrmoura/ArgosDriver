@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArgosDriver | Os Olhos que Nunca Dormem na Direção • Mostra MUV 2026 (IFPI)</title>
+  <meta name="description" content="ArgosDriver: Sistema inteligente de monitoramento veicular com Visão Computacional e Python para prevenção de fadiga e distração no trânsito. Projeto em exposição na Mostra MUV 2026 - IFPI São Raimundo Nonato." />
+  <link rel="icon" type="image/png" href="logo.png" />
+
+  <!-- Google Fonts: Orbitron, Space Grotesk & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            night: '#0A0F1D',
+            charcoal: '#111827',
+            cyber: '#00F5D4',
+            amberAlert: '#F59E0B',
+            redAlert: '#EF4444',
+            safeGreen: '#10B981'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Orbitron', 'sans-serif'],
+            tech: ['Space Grotesk', 'sans-serif']
+          },
+          boxShadow: {
+            'cyber': '0 0 25px rgba(0, 245, 212, 0.35)',
+            'cyber-lg': '0 0 45px rgba(0, 245, 212, 0.5)',
+            'amber': '0 0 30px rgba(245, 158, 11, 0.35)',
+            'red': '0 0 35px rgba(239, 68, 68, 0.45)'
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-night: #0A0F1D;
+      --bg-charcoal: #111827;
+      --neon-cyan: #00F5D4;
+      --warn-amber: #F59E0B;
+      --danger-red: #EF4444;
+    }
+
+    body {
+      background-color: var(--bg-night);
+      color: #F8FAFC;
+      overflow-x: hidden;
+    }
+
+    /* Fundo Cyber Grid sutil */
+    .bg-cyber-grid {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(0, 245, 212, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 245, 212, 0.05) 1px, transparent 1px);
+    }
+
+    /* Efeito Glassmorphism */
+    .glass-card {
+      background: rgba(17, 24, 39, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card-cyber {
+      background: rgba(17, 24, 39, 0.78);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 245, 212, 0.28);
+    }
+
+    /* Animações de Entrada no Scroll (Fade-in) */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Radar / Scanner Line Animation */
+    @keyframes scanline {
+      0% { top: 4%; opacity: 0.2; }
+      50% { top: 92%; opacity: 0.85; }
+      100% { top: 4%; opacity: 0.2; }
+    }
+
+    .scanner-beam {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00F5D4, transparent);
+      box-shadow: 0 0 14px #00F5D4;
+      animation: scanline 3.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.06); opacity: 0.35; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    .radar-ring {
+      animation: pulseRing 3s ease-in-out infinite;
+    }
+
+    /* Pulsação vermelha em alerta crítico */
+    @keyframes criticalFlash {
+      0%, 100% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.3), inset 0 0 25px rgba(239, 68, 68, 0.15); }
+      50% { box-shadow: 0 0 45px rgba(239, 68, 68, 0.75), inset 0 0 40px rgba(239, 68, 68, 0.35); }
+    }
+
+    .alert-critical-glow {
+      animation: criticalFlash 1.2s ease-in-out infinite;
+    }
+
+    /* Scrollbar estilizada */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0A0F1D;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E293B;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00F5D4;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased selection:bg-cyber selection:text-night bg-cyber-grid">
+
+  <!-- Luzeiros de Fundo (Ambient Glow) -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-cyber/10 rounded-full blur-[130px]"></div>
+    <div class="absolute top-1/3 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[140px]"></div>
+    <div class="absolute bottom-0 left-1/4 w-96 h-96 bg-cyber/5 rounded-full blur-[150px]"></div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- NAVBAR FIXA (MOBILE-FIRST)                                            -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-50 glass-card border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+      <!-- Logo & Nome -->
+      <a href="#topo" class="flex items-center gap-3 group">
+        <img src="logo.png" alt="Logo ArgosDriver" class="h-11 sm:h-13 w-auto drop-shadow-[0_0_10px_rgba(0,245,212,0.45)] group-hover:scale-105 transition-transform" />
+        <div>
+          <span class="font-display font-extrabold text-lg sm:text-xl tracking-wider bg-gradient-to-r from-cyber via-cyan-300 to-amberAlert bg-clip-text text-transparent block leading-none">
+            ARGOSDRIVER
+          </span>
+          <span class="text-[10px] sm:text-xs text-slate-400 uppercase tracking-widest block mt-0.5">
+            Visão Computacional • IFPI
+          </span>
+        </div>
+      </a>
+
+      <!-- Links Desktop -->
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+        <a href="#simulador" class="hover:text-cyber transition-colors">Simulador Interativo</a>
+        <a href="#como-funciona" class="hover:text-cyber transition-colors">Como Funciona</a>
+        <a href="#desenvolvimento" class="hover:text-cyber transition-colors">Desenvolvimento</a>
+        <a href="#impacto" class="hover:text-cyber transition-colors">Conscientização</a>
+        <a href="#equipe" class="hover:text-cyber transition-colors">Equipe & Mostra MUV</a>
+        <a href="simulador.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyber/15 border border-cyber/50 text-cyber font-semibold hover:bg-cyber hover:text-night transition-all shadow-cyber">
+          <i data-lucide="camera" class="w-4 h-4"></i>
+          <span>Cockpit ao Vivo</span>
+        </a>
+      </nav>
+
+      <!-- Botão Menu Mobile -->
+      <button id="mobile-menu-btn" aria-label="Abrir Menu" class="md:hidden p-2 rounded-lg text-slate-200 hover:text-cyber hover:bg-white/5 focus:outline-none">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+    </div>
+
+    <!-- Dropdown Mobile -->
+    <div id="mobile-menu" class="hidden md:hidden glass-card border-t border-white/10 px-4 pt-3 pb-5 space-y-2">
+      <a href="#simulador" class="mobile-nav-link block px-3 py-2.5 rounded-lg text-base font-medium text-slate-200 hover:bg-cyber/10 hover:text-cyber">
+        ⚡ Simulador Interativo de Alertas
+      </a>
+      <a href="#como-funciona" class="mobile-nav-link block px-3 py-2.5 rounded-lg text-base font-medium text-slate-200 hover:bg-cyber/10 hover:text-cyber">
+        🧠 Como a Tecnologia Funciona
+      </a>
+      <a href="#desenvolvimento" class="mobile-nav-link block px-3 py-2.5 rounded-lg text-base font-medium text-slate-200 hover:bg-cyber/10 hover:text-cyber">
+        🛠️ Bastidores do Desenvolvimento
+      </a>
+      <a href="#impacto" class="mobile-nav-link block px-3 py-2.5 rounded-lg text-base font-medium text-slate-200 hover:bg-cyber/10 hover:text-cyber">
+        🚨 Conscientização no Trânsito
+      </a>
+      <a href="#equipe" class="mobile-nav-link block px-3 py-2.5 rounded-lg text-base font-medium text-slate-200 hover:bg-cyber/10 hover:text-cyber">
+        🎓 Equipe IFPI & Mostra MUV 2026
+      </a>
+      <div class="pt-2">
+        <a href="simulador.html" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-cyber text-night font-display font-bold text-sm shadow-cyber">
+          <i data-lucide="video" class="w-4 h-4"></i>
+          ABRIR COCKPIT COM WEBCAM
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- A. HERO SECTION (TOPO IMPACTANTE)                                     -->
+  <!-- ===================================================================== -->
+  <section id="topo" class="relative pt-8 pb-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+      
+      <!-- Coluna de Texto (Esquerda) -->
+      <div class="lg:col-span-7 text-center lg:text-left space-y-6 reveal visible">
+        
+        <!-- Badge Superior MUV 2026 -->
+        <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full glass-card-cyber text-xs sm:text-sm font-medium text-cyber shadow-cyber">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyber animate-ping"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-cyber -ml-5"></span>
+          <span>Em exposição no <strong>MUV 2026</strong> • IFPI São Raimundo Nonato</span>
+        </div>
+
+        <!-- Título Principal -->
+        <h1 class="font-display font-black text-3xl sm:text-5xl lg:text-6xl leading-tight tracking-tight text-white">
+          ArgosDriver: <span class="bg-gradient-to-r from-cyber via-cyan-300 to-amberAlert bg-clip-text text-transparent">Os olhos que nunca dormem</span> na direção por você.
+        </h1>
+
+        <!-- Subtítulo Explicativo + Mitologia Grega -->
+        <p class="text-slate-300 text-base sm:text-lg lg:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0">
+          Inspirado em <strong class="text-white">Argos Panoptes</strong> — o gigante de cem olhos da mitologia grega que tudo vê e jamais adormece —, nosso sistema utiliza <span class="text-cyber font-semibold">Python, MediaPipe e Visão Computacional</span> para monitorar o motorista em tempo real e impedir acidentes por fadiga, micro-sono e distração com o celular.
+        </p>
+
+        <!-- Botões CTA -->
+        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+          <a href="#simulador" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-7 py-4 rounded-2xl bg-cyber text-night font-display font-bold text-sm sm:text-base tracking-wide shadow-cyber hover:shadow-cyber-lg hover:scale-[1.02] active:scale-[0.99] transition-all">
+            <i data-lucide="scan-face" class="w-5 h-5"></i>
+            <span>SIMULAR DETECÇÃO AGORA</span>
+          </a>
+
+          <a href="#como-funciona" class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl glass-card border border-white/15 text-slate-100 font-semibold text-sm sm:text-base hover:border-cyber/50 hover:text-cyber transition-all">
+            <i data-lucide="cpu" class="w-5 h-5 text-cyber"></i>
+            <span>Conhecer o Projeto</span>
+          </a>
+        </div>
+
+        <!-- Mini Métricas Técnicas -->
+        <div class="grid grid-cols-3 gap-3 sm:gap-4 pt-4 max-w-lg mx-auto lg:mx-0">
+          <div class="glass-card rounded-xl p-3 border border-white/5 text-center">
+            <span class="font-display font-bold text-lg sm:text-2xl text-cyber block">468</span>
+            <span class="text-[11px] sm:text-xs text-slate-400">Pontos Faciais 3D</span>
+          </div>
+          <div class="glass-card rounded-xl p-3 border border-white/5 text-center">
+            <span class="font-display font-bold text-lg sm:text-2xl text-amberAlert block">30 FPS</span>
+            <span class="text-[11px] sm:text-xs text-slate-400">Leitura Contínua</span>
+          </div>
+          <div class="glass-card rounded-xl p-3 border border-white/5 text-center">
+            <span class="font-display font-bold text-lg sm:text-2xl text-safeGreen block">&lt; 1.5s</span>
+            <span class="text-[11px] sm:text-xs text-slate-400">Resposta de Alerta</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Coluna Visual (Direita): Radar + Malha Facial Interativa (Face Mesh) -->
+      <div class="lg:col-span-5 reveal">
+        <div class="relative mx-auto max-w-md lg:max-w-none glass-card-cyber rounded-3xl p-5 sm:p-6 shadow-cyber overflow-hidden">
+          <!-- Feixe de Scanner Animado -->
+          <div class="scanner-beam"></div>
+
+          <!-- Topo do Card HUD -->
+          <div class="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-safeGreen animate-pulse"></span>
+              <span class="font-display text-xs tracking-wider text-cyber uppercase">SENTINELA BIOMÉTRICO ATIVO</span>
+            </div>
+            <span class="text-xs font-mono text-slate-400 bg-white/5 px-2.5 py-1 rounded-md border border-white/10">
+              MediaPipe Face Mesh
+            </span>
+          </div>
+
+          <!-- Ilustração Interativa de Radar + Face Mesh + Logo -->
+          <div class="relative flex flex-col items-center justify-center py-4">
+            <!-- Anéis de Radar -->
+            <div class="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center">
+              <div class="absolute inset-0 rounded-full border border-cyber/20 radar-ring"></div>
+              <div class="absolute inset-4 rounded-full border border-dashed border-cyber/30"></div>
+              <div class="absolute inset-10 rounded-full border border-cyber/15"></div>
+
+              <!-- SVG Malha de Mapeamento Facial (Face Mesh Biometric Vector) -->
+              <svg viewBox="0 0 240 240" class="w-56 h-56 sm:w-64 sm:h-64 drop-shadow-[0_0_12px_rgba(0,245,212,0.5)]">
+                <!-- Linhas de Triangulação da Face Mesh -->
+                <g stroke="#00F5D4" stroke-width="0.9" stroke-opacity="0.45" fill="none">
+                  <!-- Contorno do rosto -->
+                  <polygon points="120,24 168,42 186,88 180,145 154,192 120,212 86,192 60,145 54,88 72,42" />
+                  <!-- Malha interna simétrica -->
+                  <polyline points="72,42 120,68 168,42" />
+                  <polyline points="54,88 88,92 120,68 152,92 186,88" />
+                  <polyline points="60,145 92,135 120,126 148,135 180,145" />
+                  <polyline points="86,192 98,164 120,176 142,164 154,192" />
+                  <line x1="120" y1="24" x2="120" y2="212" stroke-dasharray="3 3" />
+                  <line x1="88" y1="92" x2="92" y2="135" />
+                  <line x1="152" y1="92" x2="148" y2="135" />
+                  <line x1="92" y1="135" x2="98" y2="164" />
+                  <line x1="148" y1="135" x2="142" y2="164" />
+                </g>
+
+                <!-- Olho Esquerdo (Monitoramento EAR) -->
+                <polygon points="75,92 88,85 103,92 88,99" fill="rgba(0, 245, 212, 0.18)" stroke="#00F5D4" stroke-width="1.8" />
+                <circle cx="88" cy="92" r="3.5" fill="#00F5D4" />
+
+                <!-- Olho Direito (Monitoramento EAR) -->
+                <polygon points="137,92 152,85 165,92 152,99" fill="rgba(0, 245, 212, 0.18)" stroke="#00F5D4" stroke-width="1.8" />
+                <circle cx="152" cy="92" r="3.5" fill="#00F5D4" />
+
+                <!-- Eixo Nasal (Pitch & Yaw) -->
+                <circle cx="120" cy="126" r="4.5" fill="#00F5D4" />
+                <circle cx="120" cy="126" r="9" fill="none" stroke="#00F5D4" stroke-width="1" stroke-dasharray="2 2" />
+
+                <!-- Boca (Monitoramento MAR de Bocejo) -->
+                <polygon points="96,164 120,156 144,164 120,174" fill="rgba(245, 158, 11, 0.15)" stroke="#F59E0B" stroke-width="1.6" />
+
+                <!-- Pontos Nodais (Landmarks) -->
+                <g fill="#00F5D4">
+                  <circle cx="120" cy="24" r="2.5" />
+                  <circle cx="72" cy="42" r="2.5" />
+                  <circle cx="168" cy="42" r="2.5" />
+                  <circle cx="54" cy="88" r="2.5" />
+                  <circle cx="186" cy="88" r="2.5" />
+                  <circle cx="60" cy="145" r="2.5" />
+                  <circle cx="180" cy="145" r="2.5" />
+                  <circle cx="86" cy="192" r="2.5" />
+                  <circle cx="154" cy="192" r="2.5" />
+                  <circle cx="120" cy="212" r="2.5" />
+                </g>
+              </svg>
+
+              <!-- Badges Flutuantes sobre o Radar -->
+              <div class="absolute top-2 left-0 glass-card px-2.5 py-1 rounded-lg border border-cyber/40 text-[11px] font-mono text-cyber">
+                EAR (Olhos): 0.45
+              </div>
+              <div class="absolute bottom-6 right-0 glass-card px-2.5 py-1 rounded-lg border border-amberAlert/40 text-[11px] font-mono text-amberAlert">
+                MAR (Boca): 0.00
+              </div>
+              <div class="absolute bottom-0 left-2 glass-card px-2.5 py-1 rounded-lg border border-safeGreen/40 text-[11px] font-mono text-safeGreen">
+                Pitch/Yaw: Pista
+              </div>
+            </div>
+
+            <!-- Logomarca Oficial ArgosDriver Integrada -->
+            <div class="mt-3 flex items-center gap-3 bg-night/80 px-4 py-2.5 rounded-2xl border border-white/10 w-full justify-between">
+              <div class="flex items-center gap-3">
+                <img src="logo.png" alt="ArgosDriver" class="h-10 w-auto" />
+                <div>
+                  <div class="text-xs font-display font-bold text-white">ARGOS PANOPTES IA</div>
+                  <div class="text-[11px] text-slate-400">Vigilância Contínua Anti-Sono</div>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-safeGreen/20 text-safeGreen border border-safeGreen/40">
+                100% ATENTO
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- B. SIMULADOR INTERATIVO DE ALERTAS (MOBILE-FIRST)                     -->
+  <!-- ===================================================================== -->
+  <section id="simulador" class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-14 reveal">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyber/10 border border-cyber/30 text-cyber text-xs font-display uppercase tracking-wider mb-3">
+        <i data-lucide="Sliders" class="w-3.5 h-3.5"></i>
+        <span>Teste Prático Interativo</span>
+      </div>
+      <h2 class="font-display font-bold text-2xl sm:text-4xl text-white">
+        O que o <span class="text-cyber">ArgosDriver</span> enxerga?
+      </h2>
+      <p class="text-slate-400 mt-3 text-sm sm:text-base">
+        Toque nos botões abaixo para simular diferentes comportamentos do motorista e veja como a Visão Computacional reage em frações de segundo:
+      </p>
+    </div>
+
+    <!-- Botões de Seleção de Cenário (3 Alertas Principais + Estado Focado) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 reveal" role="tablist">
+      <!-- Botão 1: Fadiga e Sono (Ativo por padrão para impacto) -->
+      <button
+        type="button"
+        onclick="selectScenario('fadiga')"
+        id="tab-fadiga"
+        class="scenario-tab group text-left p-4 rounded-2xl transition-all border-2 border-redAlert bg-redAlert/15 shadow-red"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="p-2 rounded-xl bg-redAlert/20 text-redAlert">
+            <i data-lucide="eye-off" class="w-5 h-5"></i>
+          </span>
+          <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-redAlert/20 text-redAlert font-bold">
+            Cenário 01
+          </span>
+        </div>
+        <h3 class="font-display font-bold text-base text-white group-hover:text-redAlert transition-colors">
+          1. Fadiga e Sono
+        </h3>
+        <p class="text-xs text-slate-300 mt-1">
+          Olhos fechados (micro-sono) e bocejos de cansaço extremo.
+        </p>
+      </button>
+
+      <!-- Botão 2: Distração Lateral -->
+      <button
+        type="button"
+        onclick="selectScenario('distracao')"
+        id="tab-distracao"
+        class="scenario-tab group text-left p-4 rounded-2xl transition-all glass-card border border-white/10 hover:border-amberAlert/60"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="p-2 rounded-xl bg-amberAlert/20 text-amberAlert">
+            <i data-lucide="scan-eye" class="w-5 h-5"></i>
+          </span>
+          <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-white/5 text-slate-400 font-bold">
+            Cenário 02
+          </span>
+        </div>
+        <h3 class="font-display font-bold text-base text-white group-hover:text-amberAlert transition-colors">
+          2. Distração Lateral
+        </h3>
+        <p class="text-xs text-slate-300 mt-1">
+          Motorista olha repetidamente para os lados e desvia o foco.
+        </p>
+      </button>
+
+      <!-- Botão 3: Uso de Smartphone -->
+      <button
+        type="button"
+        onclick="selectScenario('smartphone')"
+        id="tab-smartphone"
+        class="scenario-tab group text-left p-4 rounded-2xl transition-all glass-card border border-white/10 hover:border-redAlert/60"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="p-2 rounded-xl bg-redAlert/20 text-redAlert">
+            <i data-lucide="smartphone" class="w-5 h-5"></i>
+          </span>
+          <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-white/5 text-slate-400 font-bold">
+            Cenário 03
+          </span>
+        </div>
+        <h3 class="font-display font-bold text-base text-white group-hover:text-redAlert transition-colors">
+          3. Uso de Smartphone
+        </h3>
+        <p class="text-xs text-slate-300 mt-1">
+          Cabeça inclinada para baixo olhando mensagens no celular.
+        </p>
+      </button>
+
+      <!-- Botão 4: Motorista Focado (Comparativo Seguro) -->
+      <button
+        type="button"
+        onclick="selectScenario('focado')"
+        id="tab-focado"
+        class="scenario-tab group text-left p-4 rounded-2xl transition-all glass-card border border-white/10 hover:border-safeGreen/60"
+      >
+        <div class="flex items-center justify-between mb-2">
+          <span class="p-2 rounded-xl bg-safeGreen/20 text-safeGreen">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </span>
+          <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-white/5 text-slate-400 font-bold">
+            Comparativo
+          </span>
+        </div>
+        <h3 class="font-display font-bold text-base text-white group-hover:text-safeGreen transition-colors">
+          4. Condutor Focado
+        </h3>
+        <p class="text-xs text-slate-300 mt-1">
+          Olhos abertos na pista e postura alinhada com segurança.
+        </p>
+      </button>
+    </div>
+
+    <!-- Painel Dinâmico do Simulador -->
+    <div id="sim-panel" class="glass-card rounded-3xl p-5 sm:p-8 border-2 border-redAlert/70 alert-critical-glow transition-all duration-300 reveal">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+        
+        <!-- Imagem Real / Captura do Sistema + Sub-seletor (Esquerda) -->
+        <div class="lg:col-span-7 space-y-3">
+          <div class="relative rounded-2xl overflow-hidden border border-white/15 bg-night aspect-video shadow-2xl">
+            <img
+              id="sim-image"
+              src="assets/screen-microsono.jpg"
+              alt="Captura em tempo real do ArgosDriver"
+              class="w-full h-full object-cover transition-opacity duration-300"
+            />
+
+            <!-- Badge de Status sobre a Imagem -->
+            <div id="sim-badge-overlay" class="absolute top-3 left-3 right-3 sm:right-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-redAlert/90 text-white font-display font-bold text-xs tracking-wide shadow-lg backdrop-blur-md">
+              <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+              <span id="sim-overlay-text">🚨 ALERTA CRÍTICO SONORO: MICRO-SONO DETECTADO!</span>
+            </div>
+
+            <!-- Botão para Ouvir o Som do Alerta no Celular -->
+            <button
+              type="button"
+              onclick="playSimulatedBeep()"
+              class="absolute bottom-3 right-3 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-night/90 hover:bg-cyber hover:text-night text-cyber border border-cyber/50 text-xs font-display font-bold transition-all shadow-lg backdrop-blur-md"
+            >
+              <i data-lucide="volume-2" class="w-4 h-4"></i>
+              <span>Testar Alarme Sonoro</span>
+            </button>
+          </div>
+
+          <!-- Alternador Extra quando em Fadiga (Micro-Sono vs Bocejo) -->
+          <div id="fadiga-subtabs" class="flex flex-wrap items-center justify-between gap-2 bg-white/5 p-2.5 rounded-xl border border-white/10">
+            <span class="text-xs text-slate-300 font-medium pl-1">
+              📸 Capturas reais do protótipo neste modo:
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="subbtn-microsono"
+                onclick="switchFadigaPhoto('microsono')"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-redAlert text-white transition-all"
+              >
+                Olhos Fechados (EAR 0.04)
+              </button>
+              <button
+                type="button"
+                id="subbtn-bocejo"
+                onclick="switchFadigaPhoto('bocejo')"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 transition-all"
+              >
+                Bocejo de Fadiga (MAR 1.47)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetria e Diagnóstico da IA (Direita) -->
+        <div class="lg:col-span-5 space-y-5">
+          <!-- Cabeçalho do Diagnóstico -->
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono uppercase tracking-widest text-slate-400">DIAGNÓSTICO EM TEMPO REAL</span>
+              <span id="sim-status-pill" class="px-3 py-1 rounded-full text-xs font-display font-bold bg-redAlert/20 text-redAlert border border-redAlert/50">
+                Alerta Crítico Sonoro
+              </span>
+            </div>
+            <h3 id="sim-title" class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-2">
+              Fadiga e Micro-Sono
+            </h3>
+            <p id="sim-desc" class="text-slate-300 text-sm sm:text-base mt-2 leading-relaxed">
+              O motorista fechou os olhos por tempo prolongado (&gt; 1,5s). O cálculo da proporção ocular (<strong>EAR = 0.04</strong>) cai drasticamente e a abertura bucal (<strong>MAR</strong>) monitora bocejos prévios de exaustão.
+            </p>
+          </div>
+
+          <!-- Barras de Telemetria Biométrica -->
+          <div class="space-y-3 bg-night/70 p-4 rounded-2xl border border-white/10">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-400">Nível de Prontidão do Condutor</span>
+                <span id="sim-readiness-val" class="font-mono font-bold text-redAlert">15% (Risco de Colisão)</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                <div id="sim-readiness-bar" class="h-full bg-redAlert transition-all duration-500" style="width: 15%"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[11px] text-slate-400 block">Proporção Ocular (EAR)</span>
+                <span id="sim-ear" class="font-mono font-bold text-sm sm:text-base text-redAlert">0.04 (Fechados)</span>
+              </div>
+              <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+                <span class="text-[11px] text-slate-400 block">Proporção Bucal (MAR)</span>
+                <span id="sim-mar" class="font-mono font-bold text-sm sm:text-base text-amberAlert">Bocejo Detectado</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- O que a Câmera Detecta & Ação Emitida -->
+          <div class="space-y-2.5 text-xs sm:text-sm">
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+              <i data-lucide="camera" class="w-5 h-5 text-cyber shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-white block">O que a câmera detecta:</strong>
+                <span id="sim-camera-detect" class="text-slate-300">
+                  Distância vertical entre as pálpebras superior e inferior próxima de zero por mais de 45 quadros consecutivos.
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+              <i data-lucide="bell-ring" class="w-5 h-5 text-amberAlert shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-white block">Reação imediata do ArgosDriver:</strong>
+                <span id="sim-action" class="text-slate-300">
+                  Disparo imediato de sirene automotiva, alerta por voz sintética ("Acorde!") e cálculo da distância percorrida às cegas (84,4 metros a 80 km/h).
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- C. COMO A TECNOLOGIA FUNCIONA (3 PASSOS DIDÁTICOS)                    -->
+  <!-- ===================================================================== -->
+  <section id="como-funciona" class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/10">
+    <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 reveal">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyber/10 border border-cyber/30 text-cyber text-xs font-display uppercase tracking-wider mb-3">
+        <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+        <span>Engenharia Simples e Acessível</span>
+      </div>
+      <h2 class="font-display font-bold text-2xl sm:text-4xl text-white">
+        Como a Tecnologia Funciona?
+      </h2>
+      <p class="text-slate-400 mt-3 text-sm sm:text-base">
+        Sem precisar de sensores caros presos ao corpo do motorista, o <strong>ArgosDriver</strong> transforma uma câmera comum em um copiloto inteligente em 3 passos:
+      </p>
+    </div>
+
+    <!-- 3 Passos Didáticos -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative">
+      
+      <!-- Passo 1 -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 hover:border-cyber/50 transition-all group reveal">
+        <div class="flex items-center justify-between mb-6">
+          <div class="w-14 h-14 rounded-2xl bg-cyber/15 border border-cyber/40 flex items-center justify-center text-cyber shadow-cyber group-hover:scale-110 transition-transform">
+            <i data-lucide="video" class="w-7 h-7"></i>
+          </div>
+          <span class="font-display font-black text-3xl text-white/10 group-hover:text-cyber/30 transition-colors">01</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">
+          1. Captura em Tempo Real
+        </h3>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+          A câmera posicionada no painel monitora o rosto do condutor continuamente, funcionando de forma 100% local e respeitando a privacidade (nenhuma imagem é enviada para a internet).
+        </p>
+      </div>
+
+      <!-- Passo 2 -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 hover:border-cyber/50 transition-all group reveal">
+        <div class="flex items-center justify-between mb-6">
+          <div class="w-14 h-14 rounded-2xl bg-cyber/15 border border-cyber/40 flex items-center justify-center text-cyber shadow-cyber group-hover:scale-110 transition-transform">
+            <i data-lucide="scan-face" class="w-7 h-7"></i>
+          </div>
+          <span class="font-display font-black text-3xl text-white/10 group-hover:text-cyber/30 transition-colors">02</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">
+          2. Processamento com Python e IA
+        </h3>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+          Utilizando <strong>Python e Visão Computacional</strong>, o sistema mapeia automaticamente os pontos principais do rosto — acompanhando os olhos, a boca e a inclinação da cabeça para identificar sinais de sono ou distração.
+        </p>
+      </div>
+
+      <!-- Passo 3 -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 hover:border-cyber/50 transition-all group reveal">
+        <div class="flex items-center justify-between mb-6">
+          <div class="w-14 h-14 rounded-2xl bg-amberAlert/15 border border-amberAlert/40 flex items-center justify-center text-amberAlert shadow-amber group-hover:scale-110 transition-transform">
+            <i data-lucide="siren" class="w-7 h-7"></i>
+          </div>
+          <span class="font-display font-black text-3xl text-white/10 group-hover:text-amberAlert/30 transition-colors">03</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-white mb-3">
+          3. Ação Preventiva Imediata
+        </h3>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+          O sistema diferencia um simples piscar de olhos de um cochilo real, disparando <strong>alarmes sonoros e alertas visuais</strong> imediatamente antes que o acidente aconteça.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- C2. BASTIDORES DO DESENVOLVIMENTO (IA + INSPEÇÃO DA EQUIPE)           -->
+  <!-- ===================================================================== -->
+  <section id="desenvolvimento" class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/10">
+    <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 reveal">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyber/10 border border-cyber/30 text-cyber text-xs font-display uppercase tracking-wider mb-3">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span>Co-criação com IA & Inspeção Humana</span>
+      </div>
+      <h2 class="font-display font-bold text-2xl sm:text-4xl text-white">
+        Como o Projeto Foi Desenvolvido?
+      </h2>
+      <p class="text-slate-300 mt-3 text-sm sm:text-base leading-relaxed">
+        O <strong>ArgosDriver</strong> foi construído utilizando <strong>Engenharia de Software Assistida por Inteligência Artificial</strong>: todo o código foi gerado com apoio de IA sob o direcionamento, inspeção cuidadosa, ajustes e testes práticos da equipe e do professor orientador no <strong>IFPI Campus São Raimundo Nonato</strong>.
+      </p>
+    </div>
+
+    <!-- 3 Cards com as Fotos Reais do Processo de Desenvolvimento -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-10">
+
+      <!-- Etapa 1: Planejamento e Ideação -->
+      <div class="glass-card rounded-3xl overflow-hidden border border-white/10 hover:border-cyber/50 transition-all flex flex-col group reveal">
+        <div class="relative h-56 sm:h-64 overflow-hidden bg-night">
+          <img
+            src="assets/dev-planejamento.jpg"
+            alt="Equipe reunida planejando o projeto no laboratório do IFPI"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div class="absolute top-3 left-3 px-3 py-1 rounded-full bg-night/85 border border-cyber/40 text-cyber font-display font-bold text-xs backdrop-blur-md">
+            Etapa 01 • Concepção
+          </div>
+        </div>
+        <div class="p-6 flex-1 flex flex-col">
+          <h3 class="font-display font-bold text-lg sm:text-xl text-white mb-2">
+            Planejamento e Estudo em Equipe
+          </h3>
+          <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            Nos laboratórios do IFPI, os estudantes e o orientador pesquisaram sobre os acidentes causados pelo sono na direção e definiram exatamente quais comportamentos de risco o sistema precisava identificar.
+          </p>
+        </div>
+      </div>
+
+      <!-- Etapa 2: Geração Assistida por IA e Supervisão -->
+      <div class="glass-card rounded-3xl overflow-hidden border border-white/10 hover:border-cyber/50 transition-all flex flex-col group reveal">
+        <div class="relative h-56 sm:h-64 overflow-hidden bg-night">
+          <img
+            src="assets/dev-codificacao.jpg"
+            alt="Equipe e orientador desenvolvendo o sistema com auxílio de IA"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div class="absolute top-3 left-3 px-3 py-1 rounded-full bg-night/85 border border-amberAlert/40 text-amberAlert font-display font-bold text-xs backdrop-blur-md">
+            Etapa 02 • Codificação com IA
+          </div>
+        </div>
+        <div class="p-6 flex-1 flex flex-col">
+          <h3 class="font-display font-bold text-lg sm:text-xl text-white mb-2">
+            Criação por IA com Direção da Equipe
+          </h3>
+          <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            Utilizamos a Inteligência Artificial como ferramenta para gerar a programação do sistema e da interface. A equipe guiou cada etapa, revisando o funcionamento e personalizando a identidade visual do <strong>ArgosDriver</strong>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Etapa 3: Inspeção Prática e Validação no Campus -->
+      <div class="glass-card rounded-3xl overflow-hidden border border-white/10 hover:border-cyber/50 transition-all flex flex-col group reveal">
+        <div class="relative h-56 sm:h-64 overflow-hidden bg-night">
+          <img
+            src="assets/dev-testes.jpg"
+            alt="Alunos testando e inspecionando o ArgosDriver na prática no campus do IFPI"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+          <div class="absolute top-3 left-3 px-3 py-1 rounded-full bg-night/85 border border-safeGreen/40 text-safeGreen font-display font-bold text-xs backdrop-blur-md">
+            Etapa 03 • Inspeção & Testes
+          </div>
+        </div>
+        <div class="p-6 flex-1 flex flex-col">
+          <h3 class="font-display font-bold text-lg sm:text-xl text-white mb-2">
+            Inspeção e Testes Práticos no IFPI
+          </h3>
+          <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            Com o protótipo pronto, os alunos realizaram baterias de testes diante da câmera para inspecionar os resultados, corrigir falhas e garantir que os alertas de sono, bocejo e celular funcionassem de verdade.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quadro Destaque: O Papel da IA e o Papel dos Alunos -->
+    <div class="glass-card-cyber rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6 reveal">
+      <div class="w-16 h-16 rounded-2xl bg-cyber/15 border border-cyber/40 flex items-center justify-center text-cyber shrink-0 shadow-cyber">
+        <i data-lucide="bot" class="w-8 h-8"></i>
+      </div>
+      <div class="space-y-1.5 text-center md:text-left">
+        <h4 class="font-display font-bold text-base sm:text-lg text-white">
+          Inteligência Artificial como Aliada na Educação Científica
+        </h4>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          Assim como ocorre hoje nas empresas de tecnologia mais modernas do mundo, a IA atuou como <strong>copiloto de programação</strong>, permitindo que estudantes do 1º ano do Ensino Médio transformassem uma ideia real de segurança no trânsito em um software completo — exercitando o pensamento crítico, a direção de projetos e a inspeção de qualidade.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- D. CONSCIENTIZAÇÃO NO TRÂNSITO (IMPACTO SOCIAL + CALCULADORA)         -->
+  <!-- ===================================================================== -->
+  <section id="impacto" class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/10">
+    <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 reveal">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amberAlert/15 border border-amberAlert/40 text-amberAlert text-xs font-display uppercase tracking-wider mb-3">
+        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+        <span>Segurança Viária • Meta 3.6 da ONU</span>
+      </div>
+      <h2 class="font-display font-bold text-2xl sm:text-4xl text-white">
+        Por que cada segundo importa na direção?
+      </h2>
+      <p class="text-slate-400 mt-3 text-sm sm:text-base">
+        A combinação de fadiga e celular ao volante está entre as maiores causas de acidentes graves nas rodovias brasileiras. Veja o que acontece quando você tira os olhos da pista:
+      </p>
+    </div>
+
+    <!-- Cards de Impacto Social -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 reveal">
+      <!-- Card 1 -->
+      <div class="glass-card rounded-3xl p-6 sm:p-7 border border-redAlert/30 relative overflow-hidden">
+        <div class="text-redAlert font-display font-black text-4xl sm:text-5xl mb-2">
+          ~100 m
+        </div>
+        <div class="text-white font-bold text-base sm:text-lg mb-2">
+          Um campo de futebol inteiro às cegas
+        </div>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          A <strong>80 km/h</strong>, um veículo percorre <strong>22,2 metros por segundo</strong>. Responder uma simples mensagem de 4,5 segundos no celular equivale a dirigir de olhos vendados por <strong>100 metros</strong>!
+        </p>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="glass-card rounded-3xl p-6 sm:p-7 border border-amberAlert/30 relative overflow-hidden">
+        <div class="text-amberAlert font-display font-black text-4xl sm:text-5xl mb-2">
+          +400%
+        </div>
+        <div class="text-white font-bold text-base sm:text-lg mb-2">
+          Risco multiplicado pelo celular
+        </div>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          Segundo estudos de segurança viária (ABRAMET / OMS), manusear o smartphone ao volante aumenta em até <strong>4 vezes</strong> a chance de colisão frontal ou atropelamento.
+        </p>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="glass-card rounded-3xl p-6 sm:p-7 border border-cyber/30 relative overflow-hidden">
+        <div class="text-cyber font-display font-black text-4xl sm:text-5xl mb-2">
+          ODS 3.6
+        </div>
+        <div class="text-white font-bold text-base sm:text-lg mb-2">
+          Compromisso Global pela Vida
+        </div>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+          O <strong>ArgosDriver</strong> contribui diretamente para o Objetivo de Desenvolvimento Sustentável 3.6 da ONU: reduzir pela metade as mortes e lesões no trânsito através da tecnologia preventiva.
+        </p>
+      </div>
+    </div>
+
+    <!-- Calculadora Interativa de Distância Percorrida às Cegas -->
+    <div class="glass-card-cyber rounded-3xl p-6 sm:p-8 mb-10 reveal">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-7 space-y-4">
+          <h3 class="font-display font-bold text-lg sm:text-2xl text-white flex items-center gap-2.5">
+            <i data-lucide="gauge" class="w-6 h-6 text-cyber"></i>
+            <span>Simulador de "Distância às Cegas"</span>
+          </h3>
+          <p class="text-slate-300 text-xs sm:text-sm">
+            Arraste os controles abaixo para descobrir quantos metros seu veículo percorre sem ninguém olhando para a estrada durante um cochilo ou olhada no WhatsApp:
+          </p>
+
+          <div class="space-y-4 pt-2">
+            <!-- Controle de Velocidade -->
+            <div>
+              <div class="flex justify-between text-xs sm:text-sm mb-1.5">
+                <span class="text-slate-300 font-medium">Velocidade do Veículo:</span>
+                <span id="calc-speed-label" class="font-display font-bold text-cyber">80 km/h</span>
+              </div>
+              <input
+                id="calc-speed"
+                type="range"
+                min="40"
+                max="120"
+                step="10"
+                value="80"
+                oninput="updateBlindCalculator()"
+                class="w-full accent-[#00F5D4] cursor-pointer h-2 bg-slate-800 rounded-lg"
+              />
+            </div>
+
+            <!-- Controle de Tempo de Distração -->
+            <div>
+              <div class="flex justify-between text-xs sm:text-sm mb-1.5">
+                <span class="text-slate-300 font-medium">Segundos de Olhos Fechados / no Celular:</span>
+                <span id="calc-time-label" class="font-display font-bold text-amberAlert">3.0 segundos</span>
+              </div>
+              <input
+                id="calc-time"
+                type="range"
+                min="1"
+                max="6"
+                step="0.5"
+                value="3"
+                oninput="updateBlindCalculator()"
+                class="w-full accent-[#F59E0B] cursor-pointer h-2 bg-slate-800 rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultado Visual da Calculadora -->
+        <div class="lg:col-span-5 bg-night/90 rounded-2xl p-6 border border-redAlert/40 text-center space-y-2">
+          <span class="text-xs font-mono uppercase tracking-wider text-slate-400 block">
+            DISTÂNCIA PERCORRIDA ÀS CEGAS
+          </span>
+          <div id="calc-result-meters" class="font-display font-black text-4xl sm:text-5xl text-redAlert">
+            66,7 metros
+          </div>
+          <p id="calc-result-comparison" class="text-xs sm:text-sm text-amberAlert font-medium pt-1">
+            ⚠️ Equivale a ultrapassar 15 carros enfileirados de olhos vendados!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Frase de Impacto MUV 2026 -->
+    <div class="rounded-3xl bg-gradient-to-r from-cyber/15 via-blue-500/10 to-amberAlert/15 p-6 sm:p-10 border border-cyber/30 text-center reveal">
+      <i data-lucide="quote" class="w-8 h-8 text-cyber mx-auto mb-3 opacity-80"></i>
+      <blockquote class="font-display font-bold text-lg sm:text-2xl lg:text-3xl text-white max-w-4xl mx-auto leading-snug">
+        "Nenhuma mensagem vale uma vida e nenhum destino é tão urgente que não permita uma parada para descansar. Seja você também um multiplicador da segurança no trânsito na <span class="text-cyber">Mostra MUV 2026</span>!"
+      </blockquote>
+      <p class="text-xs sm:text-sm text-slate-300 mt-4 uppercase tracking-widest font-semibold">
+        Campanha de Conscientização Viária • Projeto ArgosDriver (IFPI)
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- E. SOBRE A EQUIPE E O EVENTO (IFPI - SÃO RAIMUNDO NONATO & MUV 2026)  -->
+  <!-- ===================================================================== -->
+  <section id="equipe" class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-white/10">
+    
+    <!-- Banner Destaque Mostra MUV 2026 + IFPI -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 border border-white/10 mb-14 flex flex-col md:flex-row items-center justify-between gap-6 reveal">
+      <div class="space-y-2 text-center md:text-left max-w-2xl">
+        <span class="text-xs font-display font-bold uppercase tracking-widest text-cyber">
+          Pesquisa, Ciência e Inovação no Sertão Piauiense
+        </span>
+        <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white">
+          IFPI • Campus São Raimundo Nonato na Mostra MUV 2026
+        </h2>
+        <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+          Projeto desenvolvido por estudantes do curso <strong>Técnico em Informática Integrado ao Ensino Médio</strong> do Instituto Federal do Piauí (IFPI), apresentado na <strong>Mostra MUV — Feira Regional de Ciências da Serra da Capivara (18 e 19 de novembro)</strong>.
+        </p>
+      </div>
+      <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-lg shrink-0">
+        <img src="assets/logo-muv.png" alt="Mostra MUV - Feira Regional de Ciências da Serra da Capivara" class="h-16 sm:h-20 w-auto object-contain" />
+      </div>
+    </div>
+
+    <!-- Título dos Criadores -->
+    <div class="text-center max-w-2xl mx-auto mb-10 reveal">
+      <h3 class="font-display font-bold text-2xl sm:text-3xl text-white">
+        Equipe Desenvolvedora & Orientação
+      </h3>
+      <p class="text-slate-400 text-sm sm:text-base mt-2">
+        Conheça os pesquisadores responsáveis pela concepção, programação e validação do sistema <strong>ArgosDriver</strong>:
+      </p>
+    </div>
+
+    <!-- Grid de Cards da Equipe (3 Alunos + Orientador) -->
+    <!-- DICA: Você pode editar os links href="#" abaixo para adicionar o Instagram, GitHub ou LinkedIn reais de cada integrante -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 reveal">
+
+      <!-- Card 1: Alice dos Passos dos Santos -->
+      <div class="glass-card rounded-3xl p-6 border border-white/10 hover:border-cyber/50 transition-all flex flex-col items-center text-center group">
+        <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyber to-blue-500 mb-4">
+          <img
+            src="assets/alice.jpg?v=2"
+            alt="Alice dos Passos dos Santos"
+            class="w-full h-full object-cover rounded-full border-2 border-night"
+          />
+        </div>
+        <span class="px-3 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-cyber/15 text-cyber border border-cyber/30 mb-2">
+          Desenvolvedora & Pesquisadora
+        </span>
+        <h4 class="font-display font-bold text-lg text-white">
+          Alice dos Passos
+        </h4>
+        <p class="text-xs text-slate-400 mt-1 mb-4">
+          Discente do Curso Técnico em Informática Integrado ao Médio • IFPI São Raimundo Nonato
+        </p>
+        <div class="mt-auto flex items-center gap-3 pt-3 border-t border-white/10 w-full justify-center">
+          <a href="#" aria-label="GitHub de Alice" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="github" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="Instagram de Alice" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="instagram" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="LinkedIn de Alice" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="linkedin" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2: Raissa Ribeiro da Costa -->
+      <div class="glass-card rounded-3xl p-6 border border-white/10 hover:border-cyber/50 transition-all flex flex-col items-center text-center group">
+        <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyber to-blue-500 mb-4">
+          <img
+            src="assets/raissa.jpg?v=2"
+            alt="Raissa Ribeiro da Costa"
+            class="w-full h-full object-cover rounded-full border-2 border-night"
+          />
+        </div>
+        <span class="px-3 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-cyber/15 text-cyber border border-cyber/30 mb-2">
+          Desenvolvedora & Pesquisadora
+        </span>
+        <h4 class="font-display font-bold text-lg text-white">
+          Raissa Ribeiro
+        </h4>
+        <p class="text-xs text-slate-400 mt-1 mb-4">
+          Discente do Curso Técnico em Informática Integrado ao Médio • IFPI São Raimundo Nonato
+        </p>
+        <div class="mt-auto flex items-center gap-3 pt-3 border-t border-white/10 w-full justify-center">
+          <a href="#" aria-label="GitHub de Raissa" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="github" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="Instagram de Raissa" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="instagram" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="LinkedIn de Raissa" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="linkedin" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3: David Emanoel Pinheiro Moura -->
+      <div class="glass-card rounded-3xl p-6 border border-white/10 hover:border-cyber/50 transition-all flex flex-col items-center text-center group">
+        <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyber to-blue-500 mb-4">
+          <img
+            src="assets/david.jpg"
+            alt="David Emanoel Pinheiro Moura"
+            class="w-full h-full object-cover rounded-full border-2 border-night"
+          />
+        </div>
+        <span class="px-3 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-cyber/15 text-cyber border border-cyber/30 mb-2">
+          Desenvolvedor & Pesquisador
+        </span>
+        <h4 class="font-display font-bold text-lg text-white">
+          David Emanoel
+        </h4>
+        <p class="text-xs text-slate-400 mt-1 mb-4">
+          Discente do Curso Técnico em Informática Integrado ao Médio • IFPI São Raimundo Nonato
+        </p>
+        <div class="mt-auto flex items-center gap-3 pt-3 border-t border-white/10 w-full justify-center">
+          <a href="#" aria-label="GitHub de David" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="github" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="Instagram de David" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="instagram" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="LinkedIn de David" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="linkedin" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 4: Prof. Dr. Ivan Rodrigues de Moura (Orientador) -->
+      <div class="glass-card-cyber rounded-3xl p-6 border border-cyber/40 hover:border-cyber transition-all flex flex-col items-center text-center group">
+        <div class="relative w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-amberAlert via-cyber to-blue-500 mb-4">
+          <img
+            src="assets/ivan.png"
+            alt="Prof. Dr. Ivan Rodrigues de Moura"
+            class="w-full h-full object-cover rounded-full border-2 border-night"
+          />
+        </div>
+        <span class="px-3 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-amberAlert/20 text-amberAlert border border-amberAlert/40 mb-2">
+          Professor Orientador
+        </span>
+        <h4 class="font-display font-bold text-lg text-white">
+          Ivan Rodrigues
+        </h4>
+        <p class="text-xs text-slate-300 mt-1 mb-4">
+          Doutor em Ciência da Computação • Docente EBTT no IFPI Campus São Raimundo Nonato
+        </p>
+        <div class="mt-auto flex items-center gap-3 pt-3 border-t border-white/10 w-full justify-center">
+          <a href="#" aria-label="GitHub de Ivan Rodrigues" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="github" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="LinkedIn de Ivan Rodrigues" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="linkedin" class="w-4 h-4"></i>
+          </a>
+          <a href="#" aria-label="Instagram de Ivan Rodrigues" class="p-2 rounded-lg bg-white/5 hover:bg-cyber hover:text-night text-slate-300 transition-colors">
+            <i data-lucide="instagram" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- F. RODAPÉ (FOOTER)                                                    -->
+  <!-- ===================================================================== -->
+  <footer class="glass-card border-t border-white/10 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3 text-center sm:text-left">
+        <img src="logo.png" alt="Logo ArgosDriver" class="h-11 w-auto" />
+        <div>
+          <span class="font-display font-bold text-white text-base block">ArgosDriver AI</span>
+          <span class="text-xs text-slate-400 block">
+            Mostra MUV 2026 • IFPI Campus São Raimundo Nonato - PI
+          </span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a
+          href="simulador.html"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-cyber/15 border border-white/10 hover:border-cyber/40 text-xs font-display font-bold text-cyber transition-all"
+        >
+          <i data-lucide="camera" class="w-4 h-4"></i>
+          <span>Abrir Simulador com Webcam</span>
+        </a>
+
+        <a
+          href="#topo"
+          class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyber text-night text-xs font-display font-bold hover:scale-105 transition-transform shadow-cyber"
+        >
+          <i data-lucide="arrow-up" class="w-4 h-4"></i>
+          <span>Voltar ao Topo</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT VANILLA (SIMULADOR INTERATIVO, ÁUDIO & ANIMAÇÕES)          -->
+  <!-- ===================================================================== -->
+  <script>
+    // Inicializar ícones Lucide
+    lucide.createIcons();
+
+    // Menu Mobile Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.add('hidden'));
+    });
+
+    // Dados dos Cenários do Simulador Interativo
+    const scenarios = {
+      fadiga: {
+        title: '1. Fadiga e Sono (Micro-Sono)',
+        statusPill: 'Alerta Crítico Sonoro',
+        pillClass: 'bg-redAlert/20 text-redAlert border-redAlert/50',
+        panelBorder: 'border-redAlert/70 alert-critical-glow',
+        overlayText: '🚨 ALERTA CRÍTICO SONORO: MICRO-SONO DETECTADO!',
+        overlayBg: 'bg-redAlert/90 text-white',
+        image: 'assets/screen-microsono.jpg',
+        showSubtabs: true,
+        desc: 'O motorista fechou os olhos por tempo prolongado (> 1,5s). O cálculo da proporção ocular (<strong>EAR = 0.04</strong>) cai abaixo do limiar de segurança e a abertura bucal (<strong>MAR</strong>) contabiliza bocejos de exaustão.',
+        readinessVal: '15% (Risco de Colisão)',
+        readinessColor: 'text-redAlert',
+        readinessBarBg: 'bg-redAlert',
+        readinessWidth: '15%',
+        ear: '0.04 (Olhos Fechados)',
+        earColor: 'text-redAlert',
+        mar: 'Bocejos Detectados',
+        marColor: 'text-amberAlert',
+        cameraDetect: 'Distância vertical entre as pálpebras superior e inferior próxima de zero por mais de 45 quadros consecutivos, ou abertura labial ampla (MAR > 0.50).',
+        action: 'Disparo imediato de sirene automotiva, alerta por voz sintética ("Acorde!") e cálculo da distância percorrida às cegas (84,4 metros a 80 km/h).',
+        soundType: 'critical'
+      },
+      distracao: {
+        title: '2. Distração Lateral',
+        statusPill: 'Aviso de Desvio de Foco',
+        pillClass: 'bg-amberAlert/20 text-amberAlert border-amberAlert/50',
+        panelBorder: 'border-amberAlert/70 shadow-amber',
+        overlayText: '⚠️ AVISO DE DESVIO DE FOCO: OLHE PARA A PISTA!',
+        overlayBg: 'bg-amberAlert/95 text-night',
+        image: 'assets/screen-distracao.jpg',
+        showSubtabs: false,
+        desc: 'O motorista vira o rosto repetidamente para os lados ou tira a atenção do para-brisa. O algoritmo calcula a rotação horizontal da cabeça (<strong>Yaw</strong>) pela assimetria entre a ponta do nariz e as extremidades da face.',
+        readinessVal: '65% (Atenção Reduzida)',
+        readinessColor: 'text-amberAlert',
+        readinessBarBg: 'bg-amberAlert',
+        readinessWidth: '65%',
+        ear: '0.69 (Abertos)',
+        earColor: 'text-safeGreen',
+        mar: '0.13 (Fechada)',
+        marColor: 'text-cyber',
+        cameraDetect: 'Deslocamento horizontal do eixo nasal (|Yaw| > 0.16) indicando que os olhos não estão voltados para a faixa de rolamento.',
+        action: 'Emissão de aviso visual amarelo no painel HUD e alerta sonoro preventivo orientando o retorno imediato do foco à via.',
+        soundType: 'warning'
+      },
+      smartphone: {
+        title: '3. Uso de Smartphone ao Volante',
+        statusPill: 'Alerta de Perigo Iminente',
+        pillClass: 'bg-redAlert/20 text-redAlert border-redAlert/50',
+        panelBorder: 'border-redAlert/70 alert-critical-glow',
+        overlayText: '📵 PERIGO IMINENTE: CELULAR NO COLO / OLHANDO PARA BAIXO!',
+        overlayBg: 'bg-redAlert/90 text-white',
+        image: 'assets/screen-smartphone.jpg',
+        showSubtabs: false,
+        desc: 'Ao olhar para o celular no colo ou no suporte inferior, a cabeça inclina-se para baixo (<strong>Pitch Ratio &lt; 0.47</strong>). O ArgosDriver identifica imediatamente que o condutor está dirigindo sem enxergar o tráfego à frente.',
+        readinessVal: '20% (Foco Fora da Pista)',
+        readinessColor: 'text-redAlert',
+        readinessBarBg: 'bg-redAlert',
+        readinessWidth: '20%',
+        ear: 'Olhar para Baixo',
+        earColor: 'text-redAlert',
+        mar: '0.05 (Fechada)',
+        marColor: 'text-cyber',
+        cameraDetect: 'Redução da razão geométrica vertical entre a linha dos olhos, a ponta do nariz e o queixo (inclinação cervical para o colo).',
+        action: 'Acionamento de alarme crítico de perigo iminente e contabilização de 131,1 metros percorridos sem ver a pista a 80 km/h!',
+        soundType: 'critical'
+      },
+      focado: {
+        title: '4. Condutor Focado (Estado Seguro)',
+        statusPill: 'Monitoramento Normal',
+        pillClass: 'bg-safeGreen/20 text-safeGreen border-safeGreen/50',
+        panelBorder: 'border-safeGreen/60 shadow-cyber',
+        overlayText: '🟢 SISTEMA ATIVO: MOTORISTA FOCADO NA PISTA',
+        overlayBg: 'bg-safeGreen/90 text-night',
+        image: 'assets/screen-focado.jpg',
+        showSubtabs: false,
+        desc: 'Condição ideal de condução: olhos bem abertos (<strong>EAR = 0.45</strong>), boca fechada (<strong>MAR = 0.00</strong>) e cabeça alinhada com o para-brisa. Piscadas naturais rápidas (0,2s) são filtradas sem gerar falsos alarmes.',
+        readinessVal: '100% (Condutor Alerta)',
+        readinessColor: 'text-safeGreen',
+        readinessBarBg: 'bg-safeGreen',
+        readinessWidth: '100%',
+        ear: '0.45 (Focados)',
+        earColor: 'text-safeGreen',
+        mar: '0.00 (Normal)',
+        marColor: 'text-safeGreen',
+        cameraDetect: '468 pontos faciais rastreados em verde com simetria facial estável e olhar direcionado para a pista.',
+        action: 'Painel permanece em modo silencioso e seguro, registrando 0,0 metros percorridos às cegas.',
+        soundType: 'safe'
+      }
+    };
+
+    let currentScenarioKey = 'fadiga';
+
+    function selectScenario(key) {
+      currentScenarioKey = key;
+      const data = scenarios[key];
+
+      // Atualizar estilo dos botões das abas
+      const tabStyles = {
+        fadiga: 'border-2 border-redAlert bg-redAlert/15 shadow-red',
+        distracao: 'border-2 border-amberAlert bg-amberAlert/15 shadow-amber',
+        smartphone: 'border-2 border-redAlert bg-redAlert/15 shadow-red',
+        focado: 'border-2 border-safeGreen bg-safeGreen/15 shadow-cyber'
+      };
+
+      ['fadiga', 'distracao', 'smartphone', 'focado'].forEach(k => {
+        const btn = document.getElementById('tab-' + k);
+        if (k === key) {
+          btn.className = `scenario-tab group text-left p-4 rounded-2xl transition-all ${tabStyles[k]}`;
+        } else {
+          btn.className = 'scenario-tab group text-left p-4 rounded-2xl transition-all glass-card border border-white/10 hover:border-cyber/50';
+        }
+      });
+
+      // Atualizar painel principal
+      const panel = document.getElementById('sim-panel');
+      panel.className = `glass-card rounded-3xl p-5 sm:p-8 border-2 transition-all duration-300 ${data.panelBorder}`;
+
+      const img = document.getElementById('sim-image');
+      img.style.opacity = '0.35';
+      setTimeout(() => {
+        img.src = data.image;
+        img.style.opacity = '1';
+      }, 120);
+
+      const overlay = document.getElementById('sim-badge-overlay');
+      overlay.className = `absolute top-3 left-3 right-3 sm:right-auto inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full font-display font-bold text-xs tracking-wide shadow-lg backdrop-blur-md ${data.overlayBg}`;
+      document.getElementById('sim-overlay-text').textContent = data.overlayText;
+
+      const pill = document.getElementById('sim-status-pill');
+      pill.className = `px-3 py-1 rounded-full text-xs font-display font-bold border ${data.pillClass}`;
+      pill.textContent = data.statusPill;
+
+      document.getElementById('sim-title').textContent = data.title;
+      document.getElementById('sim-desc').innerHTML = data.desc;
+
+      const rVal = document.getElementById('sim-readiness-val');
+      rVal.className = `font-mono font-bold ${data.readinessColor}`;
+      rVal.textContent = data.readinessVal;
+
+      const rBar = document.getElementById('sim-readiness-bar');
+      rBar.className = `h-full transition-all duration-500 ${data.readinessBarBg}`;
+      rBar.style.width = data.readinessWidth;
+
+      const earEl = document.getElementById('sim-ear');
+      earEl.className = `font-mono font-bold text-sm sm:text-base ${data.earColor}`;
+      earEl.textContent = data.ear;
+
+      const marEl = document.getElementById('sim-mar');
+      marEl.className = `font-mono font-bold text-sm sm:text-base ${data.marColor}`;
+      marEl.textContent = data.mar;
+
+      document.getElementById('sim-camera-detect').textContent = data.cameraDetect;
+      document.getElementById('sim-action').textContent = data.action;
+
+      // Mostrar/ocultar sub-botões de foto de fadiga (Micro-sono vs Bocejo)
+      const subtabs = document.getElementById('fadiga-subtabs');
+      if (data.showSubtabs) {
+        subtabs.classList.remove('hidden');
+        document.getElementById('subbtn-microsono').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-redAlert text-white transition-all';
+        document.getElementById('subbtn-bocejo').className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 transition-all';
+      } else {
+        subtabs.classList.add('hidden');
+      }
+    }
+
+    // Alternar entre as fotos reais de Micro-Sono e Bocejo dentro da aba Fadiga
+    function switchFadigaPhoto(mode) {
+      const img = document.getElementById('sim-image');
+      const btnMicro = document.getElementById('subbtn-microsono');
+      const btnBocejo = document.getElementById('subbtn-bocejo');
+
+      if (mode === 'bocejo') {
+        img.src = 'assets/screen-bocejo.jpg';
+        document.getElementById('sim-ear').textContent = '0.23 (Semifechados)';
+        document.getElementById('sim-mar').textContent = '1.47 (Bocejando!)';
+        document.getElementById('sim-overlay-text').textContent = '🥱 ALERTA DE FADIGA: BOCEJO PROLONGADO (MAR 1.47)';
+        btnBocejo.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-amberAlert text-night font-bold transition-all';
+        btnMicro.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 transition-all';
+      } else {
+        img.src = 'assets/screen-microsono.jpg';
+        document.getElementById('sim-ear').textContent = '0.04 (Olhos Fechados)';
+        document.getElementById('sim-mar').textContent = '0.00 (Fechada)';
+        document.getElementById('sim-overlay-text').textContent = '🚨 ALERTA CRÍTICO SONORO: MICRO-SONO DETECTADO!';
+        btnMicro.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-redAlert text-white transition-all';
+        btnBocejo.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-slate-200 hover:bg-white/20 transition-all';
+      }
+    }
+
+    // Sintetizador Web Audio para testar o alarme sonoro direto pelo celular na feira
+    function playSimulatedBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const data = scenarios[currentScenarioKey];
+
+        if (data.soundType === 'critical') {
+          // Sirene dupla de emergência
+          [0, 0.22].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(740, ctx.currentTime + delay);
+            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + delay + 0.18);
+            gain.gain.setValueAtTime(0.25, ctx.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.19);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + delay);
+            osc.stop(ctx.currentTime + delay + 0.2);
+          });
+        } else if (data.soundType === 'warning') {
+          // Bip de advertência âmbar
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(620, ctx.currentTime);
+          gain.gain.setValueAtTime(0.25, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.26);
+        } else {
+          // Bip suave de confirmação verde
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          gain.gain.setValueAtTime(0.18, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.19);
+        }
+      } catch (e) {
+        console.log('Áudio não suportado:', e);
+      }
+    }
+
+    // Calculadora de Distância Percorrida às Cegas
+    function updateBlindCalculator() {
+      const speedKmh = parseFloat(document.getElementById('calc-speed').value);
+      const timeSec = parseFloat(document.getElementById('calc-time').value);
+
+      document.getElementById('calc-speed-label').textContent = `${speedKmh} km/h`;
+      document.getElementById('calc-time-label').textContent = `${timeSec.toFixed(1)} segundos`;
+
+      const meters = (speedKmh / 3.6) * timeSec;
+      const carsCount = Math.max(1, Math.round(meters / 4.5));
+
+      document.getElementById('calc-result-meters').textContent = `${meters.toFixed(1).replace('.', ',')} metros`;
+
+      if (meters >= 90) {
+        document.getElementById('calc-result-comparison').textContent =
+          `🚨 Equivale a atravessar UM CAMPO DE FUTEBOL INTEIRO (${carsCount} carros enfileirados) de olhos vendados!`;
+      } else {
+        document.getElementById('calc-result-comparison').textContent =
+          `⚠️ Equivale a ultrapassar ${carsCount} carros enfileirados de olhos vendados!`;
+      }
+    }
+
+    // Animação de Fade-In no Scroll (IntersectionObserver)
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>

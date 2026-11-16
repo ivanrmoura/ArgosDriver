@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArgosDriver AI 🚗 | Sentinela Veicular Anti-Fadiga e Distração</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  
+  <!-- Google Fonts: Orbitron & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-cockpit: #04060c;
+      --panel-bg: rgba(10, 15, 29, 0.88);
+      --border-hud: rgba(0, 240, 255, 0.25);
+      --hud-cyan: #00f0ff;
+      --alert-red: #ff3344;
+      --warn-yellow: #ffbe0b;
+      --safe-green: #00df72;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg-cockpit);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Modal Inicial do Cockpit */
+    #start-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(4, 6, 12, 0.95);
+      backdrop-filter: blur(14px);
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-box {
+      background: linear-gradient(135deg, #0d1527, #060a14);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.2);
+      border-radius: 20px;
+      padding: 36px 44px;
+      max-width: 720px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .modal-logo {
+      height: 120px;
+      width: auto;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 18px rgba(0, 240, 255, 0.35));
+    }
+
+    .modal-box h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.2rem;
+      background: linear-gradient(90deg, #00f0ff, #38bdf8, #00df72);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .modal-box p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      padding: 14px 40px;
+      border: 1px solid #38bdf8;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 25px rgba(2, 132, 199, 0.6);
+      transition: all 0.25s ease;
+      letter-spacing: 1px;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.9);
+    }
+
+    /* Top Bar - Cockpit Header */
+    header {
+      background: rgba(10, 15, 29, 0.92);
+      border-bottom: 1px solid var(--border-hud);
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      font-size: 1.8rem;
+    }
+
+    .brand-logo {
+      height: 46px;
+      width: auto;
+      filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.35));
+    }
+
+    .brand-title h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, #00f0ff, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .header-pills {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pill-hud {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-hud);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-audio {
+      background: rgba(0, 223, 114, 0.12);
+      border: 1px solid var(--safe-green);
+      color: var(--safe-green);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-audio.muted {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: #64748b;
+      color: #94a3b8;
+    }
+
+    /* Layout Principal: Cockpit do Veículo */
+    #cockpit-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 16px;
+      padding: 16px;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #0a1122 0%, #04060c 100%);
+    }
+
+    /* Palco Visual do Pára-brisa com HUD Holográfico */
+    .windshield-box {
+      position: relative;
+      background: #000;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border-hud);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(0, 240, 255, 0.05);
+    }
+
+    #webcam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    #hud-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      z-index: 5;
+    }
+
+    /* HUD Holográfico Automotivo */
+    .cockpit-hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 24px;
+      z-index: 10;
+    }
+
+    /* Alerta Crítico Superior (Banner Holográfico de Pára-Brisa) */
+    .windshield-alert {
+      align-self: center;
+      padding: 12px 30px;
+      border-radius: 40px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      backdrop-filter: blur(14px);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 6px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .alert-safe {
+      background: rgba(0, 223, 114, 0.2);
+      border: 2px solid var(--safe-green);
+      color: #a7f3d0;
+      box-shadow: 0 0 30px rgba(0, 223, 114, 0.4);
+    }
+
+    .alert-warn {
+      background: rgba(255, 190, 11, 0.25);
+      border: 2px solid var(--warn-yellow);
+      color: #fef08a;
+      box-shadow: 0 0 30px rgba(255, 190, 11, 0.5);
+    }
+
+    .alert-danger {
+      background: rgba(255, 51, 68, 0.35);
+      border: 2px solid var(--alert-red);
+      color: #fecaca;
+      box-shadow: 0 0 40px rgba(255, 51, 68, 0.8);
+      animation: dangerFlash 0.8s infinite alternate;
+    }
+
+    @keyframes dangerFlash {
+      0%   { transform: scale(1);   opacity: 0.9; }
+      100% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 20px #ff3344); }
+    }
+
+    /* Painel Inferior do Pára-brisa (Métricas Rápidas) */
+    .cockpit-telemetry {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .telemetry-card {
+      background: rgba(10, 15, 29, 0.82);
+      border: 1px solid var(--border-hud);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .telemetry-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .telemetry-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    /* Painel Lateral - Computador de Bordo e Gráficos */
+    .dashboard-aside {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-hud);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      backdrop-filter: blur(14px);
+    }
+
+    .dash-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .dash-card h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.95rem;
+      color: var(--hud-cyan);
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Índice de Atenção do Motorista (Score) */
+    .focus-score-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(0, 223, 114, 0.15));
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 12px;
+      margin-bottom: 6px;
+    }
+
+    .focus-score-num {
+      font-family: 'Orbitron', monospace;
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--safe-green);
+    }
+
+    /* Medidores EAR (Eye Aspect Ratio) e MAR (Mouth Aspect Ratio) */
+    .ratio-bar-wrapper {
+      margin-top: 10px;
+    }
+
+    .ratio-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      margin-bottom: 4px;
+    }
+
+    .ratio-bar-bg {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .ratio-bar-fill {
+      height: 100%;
+      width: 80%;
+      background: var(--safe-green);
+      transition: width 0.15s ease, background-color 0.15s ease;
+    }
+
+    /* Grade dos Sensores Biométricos */
+    .sensors-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .sensor-item {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .sensor-item-name {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sensor-item-val {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* Fatos de Trânsito / Impacto Social */
+    .stat-alert-box {
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+      padding: 10px;
+      background: rgba(255, 51, 68, 0.08);
+      border-left: 3px solid var(--alert-red);
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* Ações de Demonstração Rápida para os Jurados */
+    .demo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn-demo {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-demo:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+
+    /* Rodapé */
+    footer {
+      background: #060914;
+      border-top: 1px solid var(--border-hud);
+      padding: 8px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: #64748b;
+    }
+
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--safe-green);
+      box-shadow: 0 0 8px var(--safe-green);
+      margin-right: 6px;
+    }
+  </style>
+
+  <!-- MediaPipe Face Mesh para Rastreamento Ocular (EAR), Labial (MAR) e Pose da Cabeça -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <!-- Modal Inicial com Instruções de Segurança Viária -->
+  <div id="start-modal">
+    <div class="modal-box">
+      <img src="logo.png" alt="Logo ArgosDriver AI" class="modal-logo">
+      <h2>ArgosDriver AI</h2>
+      <p>
+        Sentinela Veicular Anti-Fadiga e Distração com Inteligência Artificial.
+        Utiliza visão computacional para monitorar <strong>micro-sonos (fechamento prolongado dos olhos)</strong>, <strong>bocejos de fadiga</strong> e <strong>desatenção na pista (olhar para o celular ou para os lados)</strong>.
+      </p>
+
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; margin-bottom:24px; text-align:left;">
+        <div style="background:rgba(255,255,255,0.04); padding:12px; border-radius:10px;">
+          <h4 style="color:#00df72; font-size:0.85rem; margin-bottom:4px;">🟢 Motorista Focado</h4>
+          <p style="font-size:0.75rem; color:#94a3b8;">Olhos abertos na pista e cabeça alinhada com o pára-brisa.</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.04); padding:12px; border-radius:10px;">
+          <h4 style="color:#ffbe0b; font-size:0.85rem; margin-bottom:4px;">🥱 Bocejo de Fadiga</h4>
+          <p style="font-size:0.75rem; color:#94a3b8;">Abertura labial prolongada (MAR elevado), alertando cansaço prévio.</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.04); padding:12px; border-radius:10px;">
+          <h4 style="color:#ff3344; font-size:0.85rem; margin-bottom:4px;">🚨 Micro-Sono / Dormindo</h4>
+          <p style="font-size:0.75rem; color:#94a3b8;">Olhos fechados por mais de 1.5 segundo. Disparo de buzina e sirene!</p>
+        </div>
+      </div>
+
+      <button class="start-btn" id="start-btn">INICIAR SIMULADOR DE CABINE</button>
+    </div>
+  </div>
+
+  <!-- Header Superior -->
+  <header>
+    <div class="brand-box">
+      <img src="logo.png" alt="Logo ArgosDriver AI" class="brand-logo">
+      <div class="brand-title">
+        <h1>ArgosDriver AI</h1>
+        <div class="brand-sub">Tecnologia ADAS • ODS 3.6 da ONU • Prevenção Viária</div>
+      </div>
+    </div>
+
+    <div class="header-pills">
+      <button class="btn-audio" id="audio-toggle">
+        🔊 Sirene & Alertas: Ativado
+      </button>
+      <div class="pill-hud" id="ai-status">
+        <span class="pulse-dot"></span>
+        <span>Aguardando Conexão da Câmera...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Cockpit Principal -->
+  <main id="cockpit-main">
+    
+    <!-- Pára-brisa do Carro com Câmera e HUD -->
+    <div class="windshield-box">
+      <video id="webcam" playsinline autoplay muted></video>
+      <canvas id="hud-canvas"></canvas>
+
+      <!-- Camada do HUD Holográfico -->
+      <div class="cockpit-hud">
+        
+        <!-- Alerta Dinâmico no Pára-brisa -->
+        <div class="windshield-alert alert-safe" id="windshield-alert">
+          <span id="alert-icon">🛡️</span>
+          <span id="alert-text">SISTEMA ATIVO: MOTORISTA FOCADO</span>
+        </div>
+
+        <!-- Telemetria Inferior da Pista -->
+        <div class="cockpit-telemetry">
+          <div class="telemetry-card">
+            <span class="telemetry-label">Velocidade Simulada</span>
+            <span class="telemetry-val" style="color:var(--hud-cyan);" id="speed-display">80 km/h</span>
+          </div>
+          
+          <div class="telemetry-card" style="text-align:right;">
+            <span class="telemetry-label">Distância Percorrida sem Ver a Pista</span>
+            <span class="telemetry-val" style="color:var(--alert-red);" id="blind-distance-display">0.0 m</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Computador de Bordo Lateral -->
+    <aside class="dashboard-aside">
+
+      <!-- Índice de Atenção do Condutor -->
+      <div class="dash-card">
+        <h3>📊 Índice de Atenção</h3>
+        <div class="focus-score-box">
+          <div>
+            <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Nível de Prontidão:</div>
+            <div style="font-weight:700; font-size:0.85rem;" id="focus-level-text">Condutor Alerta</div>
+          </div>
+          <div class="focus-score-num" id="focus-score-val">100%</div>
+        </div>
+
+        <!-- Medidor EAR (Olhos) -->
+        <div class="ratio-bar-wrapper">
+          <div class="ratio-label-row">
+            <span>Abertura Ocular (EAR):</span>
+            <strong id="ear-val" style="color:var(--safe-green);">0.32</strong>
+          </div>
+          <div class="ratio-bar-bg">
+            <div class="ratio-bar-fill" id="ear-bar" style="width:80%;"></div>
+          </div>
+        </div>
+
+        <!-- Medidor MAR (Boca / Bocejo) -->
+        <div class="ratio-bar-wrapper">
+          <div class="ratio-label-row">
+            <span>Abertura Labial (MAR):</span>
+            <strong id="mar-val" style="color:var(--hud-cyan);">0.15</strong>
+          </div>
+          <div class="ratio-bar-bg">
+            <div class="ratio-bar-fill" id="mar-bar" style="width:20%; background:var(--hud-cyan);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sensores Biométricos Avançados ADAS (8 Indicadores) -->
+      <div class="dash-card">
+        <h3>🔍 Sensores Biométricos ADAS</h3>
+        <div class="sensors-grid">
+          <div class="sensor-item" id="sensor-eyes">
+            <div class="sensor-item-name">Estado dos Olhos</div>
+            <div class="sensor-item-val" style="color:var(--safe-green);">Abertos</div>
+          </div>
+          <div class="sensor-item" id="sensor-mouth">
+            <div class="sensor-item-name">Bocejo / Boca</div>
+            <div class="sensor-item-val" style="color:var(--safe-green);">Fechada</div>
+          </div>
+          <div class="sensor-item" id="sensor-head">
+            <div class="sensor-item-name">Direção do Olhar</div>
+            <div class="sensor-item-val" style="color:var(--safe-green);">Pista</div>
+          </div>
+          <div class="sensor-item" id="sensor-nod">
+            <div class="sensor-item-name">Queda de Cabeça</div>
+            <div class="sensor-item-val" style="color:var(--safe-green);">Firme</div>
+          </div>
+          <div class="sensor-item" id="sensor-phone">
+            <div class="sensor-item-name">Uso de Celular</div>
+            <div class="sensor-item-val" style="color:var(--safe-green);">Não Detectado</div>
+          </div>
+          <div class="sensor-item" id="sensor-driver">
+            <div class="sensor-item-name">Presença na Direção</div>
+            <div class="sensor-item-val" style="color:var(--safe-green);">Presente</div>
+          </div>
+          <div class="sensor-item" id="sensor-driving-time">
+            <div class="sensor-item-name">Tempo Contínuo</div>
+            <div class="sensor-item-val" style="color:var(--hud-cyan);" id="drive-clock">00:00</div>
+          </div>
+          <div class="sensor-item" id="sensor-yawn-count">
+            <div class="sensor-item-name">Total de Bocejos</div>
+            <div class="sensor-item-val" style="color:var(--hud-cyan);">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estatística de Risco Real (Dados da PRF & OMS) -->
+      <div class="dash-card">
+        <h3>⚠️ Impacto no Mundo Real</h3>
+        <div class="stat-alert-box" id="social-stat-box">
+          <strong>Perigo do Celular ao Volante:</strong> Olhar para o celular no colo por 3 segundos a 80 km/h equivale a percorrer <strong>66 metros completamente às cegas</strong>!
+        </div>
+      </div>
+
+      <!-- Demonstração Rápida no Estande (Todas as 8 Situações) -->
+      <div class="dash-card">
+        <h3 style="font-size:0.8rem; color:#94a3b8;">🧪 Demonstração para os Jurados</h3>
+        <div class="demo-grid">
+          <button class="btn-demo" onclick="simulateState('safe')">🟢 Motorista Alerta</button>
+          <button class="btn-demo" onclick="simulateState('sleep')">🚨 Micro-Sono</button>
+          <button class="btn-demo" onclick="simulateState('yawn')">🥱 Bocejo de Fadiga</button>
+          <button class="btn-demo" onclick="simulateState('phone_down')">📱 Celular no Colo (Olhar Baixo)</button>
+          <button class="btn-demo" onclick="simulateState('distracted')">👀 Olhando para o Lado</button>
+          <button class="btn-demo" onclick="simulateState('nodding')">⚡ Cabeça Desabando</button>
+          <button class="btn-demo" onclick="simulateState('absent')">👤 Condutor Ausente</button>
+          <button class="btn-demo" onclick="simulateState('fatigue')">☕ Fadiga Acumulada</button>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Rodapé -->
+  <footer>
+    <div>
+      <span class="pulse-dot"></span>
+      <span id="footer-status">ArgosDriver AI • Mapeamento Facial 3D em 468 Pontos (MediaPipe Face Mesh)</span>
+    </div>
+    <div>
+      Projeto Feira de Ciências • Segurança no Trânsito & Redução de Sinistros • ODS 3.6 ONU
+    </div>
+  </footer>
+
+  <script>
+    // =========================================================================
+    // ESTADO GLOBAL & CONFIGURAÇÕES ADAS
+    // =========================================================================
+    let faceMesh = null;
+    let camera = null;
+    let audioEnabled = true;
+    let isSimulating = false;
+    let lastSpokenTime = 0;
+
+    // Métricas de Rastreamento ADAS
+    let closedEyesFrames = 0;
+    let yawningFrames = 0;
+    let totalYawnsCount = 0;
+    let distractedFrames = 0;
+    let headNodFrames = 0;
+    let absentFrames = 0;
+    let phoneFrames = 0;
+    let blindMeters = 0.0;
+    let simulatedSpeedKmH = 80;
+
+    let driveSeconds = 0;
+    let driveTimer = null;
+    let previousNoseY = null;
+
+    // Referências DOM
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('hud-canvas');
+    const ctx = canvas.getContext('2d');
+    const startModal = document.getElementById('start-modal');
+    const startBtn = document.getElementById('start-btn');
+    const audioToggle = document.getElementById('audio-toggle');
+    const aiStatus = document.getElementById('ai-status');
+
+    // HUD Elements
+    const windshieldAlert = document.getElementById('windshield-alert');
+    const alertIcon = document.getElementById('alert-icon');
+    const alertText = document.getElementById('alert-text');
+    const blindDistanceDisplay = document.getElementById('blind-distance-display');
+    const focusScoreVal = document.getElementById('focus-score-val');
+    const focusLevelText = document.getElementById('focus-level-text');
+    const earVal = document.getElementById('ear-val');
+    const earBar = document.getElementById('ear-bar');
+    const marVal = document.getElementById('mar-val');
+    const marBar = document.getElementById('mar-bar');
+
+    // Sensores
+    const sensorEyes = document.getElementById('sensor-eyes').querySelector('.sensor-item-val');
+    const sensorMouth = document.getElementById('sensor-mouth').querySelector('.sensor-item-val');
+    const sensorHead = document.getElementById('sensor-head').querySelector('.sensor-item-val');
+    const sensorNod = document.getElementById('sensor-nod').querySelector('.sensor-item-val');
+    const sensorPhone = document.getElementById('sensor-phone').querySelector('.sensor-item-val');
+    const sensorDriver = document.getElementById('sensor-driver').querySelector('.sensor-item-val');
+    const sensorDrivingTime = document.getElementById('drive-clock');
+    const sensorYawnCount = document.getElementById('sensor-yawn-count').querySelector('.sensor-item-val');
+    const socialStatBox = document.getElementById('social-stat-box');
+
+    function startDrivingTimer() {
+      if (driveTimer) clearInterval(driveTimer);
+      driveTimer = setInterval(() => {
+        driveSeconds++;
+        const mins = String(Math.floor(driveSeconds / 60)).padStart(2, '0');
+        const secs = String(driveSeconds % 60).padStart(2, '0');
+        sensorDrivingTime.innerText = `${mins}:${secs}`;
+
+        // Alerta de fadiga contínua aos 15 minutos de direção simulada
+        if (driveSeconds === 900) {
+          triggerFatigueAlert();
+        }
+      }, 1000);
+    }
+
+    function triggerFatigueAlert() {
+      updateStatus('warn', '☕ FADIGA CUMULATIVA: PAUSA RECOMENDADA!');
+      playBeepWarning();
+      speakVoiceAlert('Atenção condutor: tempo de direção contínua elevado. Programe uma parada de descanso.');
+    }
+
+    // =========================================================================
+    // SISTEMA DE ALERTA SONORO (Web Audio API: Buzina, Sirene, Bips)
+    // =========================================================================
+    let audioCtx = null;
+
+    function playCarHorn() {
+      if (!audioEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(349.23, now); // F4
+        osc2.type = 'sawtooth';
+        osc2.frequency.setValueAtTime(440.00, now); // A4
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.36);
+        osc2.stop(now + 0.36);
+      } catch (e) {}
+    }
+
+    function playSirenAlert() {
+      if (!audioEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.2);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.42);
+      } catch (e) {}
+    }
+
+    function playBeepWarning() {
+      if (!audioEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.19);
+      } catch (e) {}
+    }
+
+    function speakVoiceAlert(text) {
+      if (!audioEnabled) return;
+      const now = Date.now();
+      if ('speechSynthesis' in window && (now - lastSpokenTime > 3800)) {
+        lastSpokenTime = now;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1.15;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    audioToggle.addEventListener('click', () => {
+      audioEnabled = !audioEnabled;
+      if (audioEnabled) {
+        audioToggle.classList.remove('muted');
+        audioToggle.innerText = '🔊 Sirene & Alertas: Ativado';
+      } else {
+        audioToggle.classList.add('muted');
+        audioToggle.innerText = '🔇 Alertas Silenciados';
+        window.speechSynthesis.cancel();
+      }
+    });
+
+    // =========================================================================
+    // CÁLCULOS BIOMÉTRICOS FACIAIS (EAR, MAR, HEAD NODDING, YAW)
+    // =========================================================================
+    function dist2D(p1, p2) {
+      return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    }
+
+    function calculateEAR(landmarks) {
+      const dV_left = dist2D(landmarks[159], landmarks[145]);
+      const dH_left = dist2D(landmarks[33], landmarks[133]);
+      const earLeft = dV_left / (dH_left || 1);
+
+      const dV_right = dist2D(landmarks[386], landmarks[374]);
+      const dH_right = dist2D(landmarks[362], landmarks[263]);
+      const earRight = dV_right / (dH_right || 1);
+
+      return (earLeft + earRight) / 2;
+    }
+
+    function calculateMAR(landmarks) {
+      const dV_mouth = dist2D(landmarks[13], landmarks[14]);
+      const dH_mouth = dist2D(landmarks[78], landmarks[308]);
+      return dV_mouth / (dH_mouth || 1);
+    }
+
+    function calculateHeadYaw(landmarks) {
+      const noseX = landmarks[1].x;
+      const leftX = landmarks[234].x;
+      const rightX = landmarks[454].x;
+      const totalSpan = rightX - leftX;
+      if (totalSpan <= 0) return 0;
+      return ((noseX - leftX) / totalSpan) - 0.5;
+    }
+
+    // Inclinação Vertical da Cabeça (Head Pitch / Olhar para baixo no celular)
+    function calculateHeadPitch(landmarks) {
+      // Nariz=1, Ponto entre os olhos/glabela=168, Queixo=152
+      const eyeLevelY = landmarks[168].y;
+      const chinY = landmarks[152].y;
+      const noseY = landmarks[1].y;
+      const faceHeight = chinY - eyeLevelY;
+      if (faceHeight <= 0) return 0;
+
+      // Posição relativa do nariz em relação à altura do rosto
+      // Quando olha para baixo (celular), a distância do nariz ao queixo encurta drasticamente
+      const noseToChin = chinY - noseY;
+      const ratio = noseToChin / faceHeight;
+      return ratio; // Normal: ~0.55 a 0.65. Olhando para baixo no celular: < 0.46
+    }
+
+    // =========================================================================
+    // DESENHO DO HUD HOLOGRÁFICO NO CANVAS
+    // =========================================================================
+    function drawFacialMeshHUD(landmarks, statusState) {
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let hudColor = '#00df72';
+      if (statusState === 'warn') hudColor = '#ffbe0b';
+      if (statusState === 'danger') hudColor = '#ff3344';
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Retículo nos Olhos
+      const eyePoints = [33, 133, 159, 145, 362, 263, 386, 374];
+      ctx.fillStyle = hudColor;
+      eyePoints.forEach(ptIdx => {
+        const pt = landmarks[ptIdx];
+        ctx.beginPath();
+        ctx.arc(pt.x * w, pt.y * h, 3, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+
+      // Traçado Labial
+      const mouthPoints = [78, 13, 308, 14];
+      ctx.strokeStyle = hudColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      mouthPoints.forEach((ptIdx, idx) => {
+        const pt = landmarks[ptIdx];
+        if (idx === 0) ctx.moveTo(pt.x * w, pt.y * h);
+        else ctx.lineTo(pt.x * w, pt.y * h);
+      });
+      ctx.closePath();
+      ctx.stroke();
+
+      // Vetor de Nariz
+      const nose = landmarks[1];
+      ctx.beginPath();
+      ctx.arc(nose.x * w, nose.y * h, 5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#00f0ff';
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // LOOP PRINCIPAL DE PROCESSAMENTO DO CONDUTOR
+    // =========================================================================
+    function onFaceMeshResults(results) {
+      if (isSimulating) return;
+
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+
+      // 1. Verificação de Condutor Ausente / Mal Súbito
+      if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+        absentFrames++;
+        if (absentFrames > 25) { // Condutor sumiu da tela por mais de ~1 segundo
+          blindMeters += (simulatedSpeedKmH / 3.6) * 0.1;
+          blindDistanceDisplay.innerText = `${blindMeters.toFixed(1)} m`;
+
+          updateStatus('danger', '⚠️ CONDUTOR AUSENTE / MAL SÚBITO!');
+          sensorDriver.innerText = 'AUSENTE / FORA';
+          sensorDriver.style.color = 'var(--alert-red)';
+          playSirenAlert();
+          speakVoiceAlert('Atenção: condutor não detectado no posto de direção!');
+        }
+        aiStatus.innerHTML = '<span style="color:#ff3344;">⚠️ Condutor Fora do Enquadramento</span>';
+        return;
+      }
+
+      absentFrames = 0;
+      sensorDriver.innerText = 'Presente';
+      sensorDriver.style.color = 'var(--safe-green)';
+      aiStatus.innerHTML = '<span class="pulse-dot"></span><span>Sentinela Biométrico Ativo</span>';
+
+      const landmarks = results.multiFaceLandmarks[0];
+
+      const ear = calculateEAR(landmarks);
+      const mar = calculateMAR(landmarks);
+      const yaw = calculateHeadYaw(landmarks);
+      const pitchRatio = calculateHeadPitch(landmarks);
+
+      // Medidores visuais
+      earVal.innerText = ear.toFixed(2);
+      earBar.style.width = `${Math.min(100, (ear / 0.35) * 100)}%`;
+
+      marVal.innerText = mar.toFixed(2);
+      marBar.style.width = `${Math.min(100, (mar / 0.65) * 100)}%`;
+
+      // 2. Detecção de Head Nodding (Queda brusca da cabeça no eixo Y)
+      const currentNoseY = landmarks[1].y;
+      let isNodding = false;
+      if (previousNoseY !== null) {
+        const deltaY = currentNoseY - previousNoseY;
+        if (deltaY > 0.045 && ear < 0.23) { // Caiu rápido para baixo com olhos quase fechados
+          headNodFrames = 25;
+        }
+      }
+      previousNoseY = currentNoseY;
+
+      if (headNodFrames > 0) {
+        headNodFrames--;
+        isNodding = true;
+      }
+
+      // 3. Detecção de Olhos Fechados / Micro-Sono
+      if (ear < 0.21) {
+        closedEyesFrames++;
+      } else {
+        closedEyesFrames = Math.max(0, closedEyesFrames - 2);
+      }
+
+      // 4. Detecção de Bocejo (MAR > 0.50)
+      if (mar > 0.50) {
+        yawningFrames++;
+        if (yawningFrames === 15) {
+          totalYawnsCount++;
+          sensorYawnCount.innerText = totalYawnsCount;
+        }
+      } else {
+        yawningFrames = Math.max(0, yawningFrames - 1);
+      }
+
+      // 5. Detecção de Olhar para Baixo (Mexendo no Celular no colo / painel)
+      // pitchRatio < 0.47 indica que o nariz baixou muito em direção ao queixo (olhos fitados para baixo)
+      const isLookingDownAtPhone = (pitchRatio < 0.47);
+      if (isLookingDownAtPhone) {
+        phoneFrames++;
+      } else {
+        phoneFrames = Math.max(0, phoneFrames - 2);
+      }
+
+      // 6. Detecção de Distração Lateral (Olhando para os lados)
+      if (Math.abs(yaw) > 0.16) {
+        distractedFrames++;
+      } else {
+        distractedFrames = Math.max(0, distractedFrames - 2);
+      }
+
+      // -------------------------------------------------------------
+      // DIAGNÓSTICO E PRIORIZAÇÃO DE ALERTAS
+      // -------------------------------------------------------------
+      if (isNodding) {
+        blindMeters += (simulatedSpeedKmH / 3.6) * 0.1;
+        blindDistanceDisplay.innerText = `${blindMeters.toFixed(1)} m`;
+
+        updateStatus('danger', '⚡ CABEÇA DESABANDO! COCHILO PROFUNDO!');
+        sensorNod.innerText = 'DESABOU (COCHILO)';
+        sensorNod.style.color = 'var(--alert-red)';
+        drawFacialMeshHUD(landmarks, 'danger');
+
+        playCarHorn();
+        speakVoiceAlert('Alerta de colisão: cabeça caída! Acorde!');
+      } else if (closedEyesFrames > 22) {
+        blindMeters += (simulatedSpeedKmH / 3.6) * 0.1;
+        blindDistanceDisplay.innerText = `${blindMeters.toFixed(1)} m`;
+
+        updateStatus('danger', '🚨 ALERTA: MICRO-SONO! ACORDE!');
+        sensorEyes.innerText = 'FECHADOS (DORMINDO)';
+        sensorEyes.style.color = 'var(--alert-red)';
+        drawFacialMeshHUD(landmarks, 'danger');
+
+        playCarHorn();
+        speakVoiceAlert('Atenção motorista: olhos fechados! Acorde imediatamente!');
+      } else if (phoneFrames > 16) {
+        // Alerta de Celular no Colo / Olhar para baixo prolongado
+        blindMeters += (simulatedSpeedKmH / 3.6) * 0.1;
+        blindDistanceDisplay.innerText = `${blindMeters.toFixed(1)} m`;
+
+        updateStatus('danger', '📱 CELULAR NO COLO / OLHANDO PARA BAIXO!');
+        sensorPhone.innerText = 'MEXENDO NO CELULAR';
+        sensorPhone.style.color = 'var(--alert-red)';
+        sensorHead.innerText = 'OLHANDO P/ BAIXO';
+        sensorHead.style.color = 'var(--alert-red)';
+        drawFacialMeshHUD(landmarks, 'danger');
+
+        playBeepWarning();
+        speakVoiceAlert('Infração: olhar para baixo detectado! Largue o celular e olhe para a pista!');
+      } else if (yawningFrames > 12) {
+        updateStatus('warn', '🥱 FADIGA: BOCEJO DETECTADO!');
+        sensorMouth.innerText = 'BOCEJANDO';
+        sensorMouth.style.color = 'var(--warn-yellow)';
+        drawFacialMeshHUD(landmarks, 'warn');
+
+        playBeepWarning();
+        speakVoiceAlert('Sinal de fadiga detectado. Recomenda-se parar para um café.');
+      } else if (distractedFrames > 18) {
+        updateStatus('warn', '👀 DISTRAÇÃO: OLHE PARA A PISTA!');
+        sensorHead.innerText = 'OLHANDO LATERAL';
+        sensorHead.style.color = 'var(--warn-yellow)';
+        drawFacialMeshHUD(landmarks, 'warn');
+
+        playBeepWarning();
+        speakVoiceAlert('Atenção: mantenha o olhar na estrada.');
+      } else {
+        // Estado Normal
+        blindMeters = 0.0;
+        blindDistanceDisplay.innerText = '0.0 m';
+        updateStatus('safe', 'SISTEMA ATIVO: MOTORISTA FOCADO');
+
+        sensorEyes.innerText = 'Abertos (Focados)';
+        sensorEyes.style.color = 'var(--safe-green)';
+        sensorMouth.innerText = 'Fechada';
+        sensorMouth.style.color = 'var(--safe-green)';
+        sensorHead.innerText = 'Pista';
+        sensorHead.style.color = 'var(--safe-green)';
+        sensorNod.innerText = 'Firme';
+        sensorNod.style.color = 'var(--safe-green)';
+        sensorPhone.innerText = 'Não Detectado';
+        sensorPhone.style.color = 'var(--safe-green)';
+
+        drawFacialMeshHUD(landmarks, 'safe');
+      }
+    }
+
+    function updateStatus(type, message) {
+      windshieldAlert.className = `windshield-alert alert-${type}`;
+      alertText.innerText = message;
+
+      if (type === 'safe') {
+        alertIcon.innerText = '🛡️';
+        focusScoreVal.innerText = '100%';
+        focusScoreVal.style.color = 'var(--safe-green)';
+        focusLevelText.innerText = 'Condutor Alerta';
+        earBar.style.backgroundColor = 'var(--safe-green)';
+      } else if (type === 'warn') {
+        alertIcon.innerText = '⚠️';
+        focusScoreVal.innerText = '65%';
+        focusScoreVal.style.color = 'var(--warn-yellow)';
+        focusLevelText.innerText = 'Atenção Reduzida';
+        earBar.style.backgroundColor = 'var(--warn-yellow)';
+      } else if (type === 'danger') {
+        alertIcon.innerText = '🚨';
+        focusScoreVal.innerText = '15%';
+        focusScoreVal.style.color = 'var(--alert-red)';
+        focusLevelText.innerText = 'RISCO DE COLISÃO';
+        earBar.style.backgroundColor = 'var(--alert-red)';
+      }
+    }
+
+    // =========================================================================
+    // MODO DE SIMULAÇÃO RÁPIDA (AS 8 SITUAÇÕES PARA OS JURADOS)
+    // =========================================================================
+    function simulateState(state) {
+      isSimulating = true;
+
+      if (state === 'safe') {
+        updateStatus('safe', 'SISTEMA ATIVO: MOTORISTA FOCADO');
+        earVal.innerText = '0.34';
+        earBar.style.width = '85%';
+        marVal.innerText = '0.12';
+        marBar.style.width = '15%';
+        sensorEyes.innerText = 'Abertos (Focados)';
+        sensorEyes.style.color = 'var(--safe-green)';
+        sensorMouth.innerText = 'Fechada';
+        sensorMouth.style.color = 'var(--safe-green)';
+        sensorHead.innerText = 'Pista';
+        sensorHead.style.color = 'var(--safe-green)';
+        sensorNod.innerText = 'Firme';
+        sensorNod.style.color = 'var(--safe-green)';
+        sensorPhone.innerText = 'Não Detectado';
+        sensorPhone.style.color = 'var(--safe-green)';
+        sensorDriver.innerText = 'Presente';
+        sensorDriver.style.color = 'var(--safe-green)';
+        blindDistanceDisplay.innerText = '0.0 m';
+      } else if (state === 'sleep') {
+        updateStatus('danger', '🚨 ALERTA: MICRO-SONO! ACORDE!');
+        earVal.innerText = '0.08';
+        earBar.style.width = '15%';
+        sensorEyes.innerText = 'FECHADOS (DORMINDO)';
+        sensorEyes.style.color = 'var(--alert-red)';
+        blindDistanceDisplay.innerText = '44.4 m';
+        playCarHorn();
+        speakVoiceAlert('Atenção motorista: olhos fechados! Acorde imediatamente!');
+      } else if (state === 'yawn') {
+        updateStatus('warn', '🥱 FADIGA: BOCEJO DETECTADO!');
+        marVal.innerText = '0.68';
+        marBar.style.width = '90%';
+        sensorMouth.innerText = 'BOCEJANDO (MAR Alto)';
+        sensorMouth.style.color = 'var(--warn-yellow)';
+        totalYawnsCount++;
+        sensorYawnCount.innerText = totalYawnsCount;
+        playBeepWarning();
+        speakVoiceAlert('Bocejo de fadiga registrado. Programe uma parada.');
+      } else if (state === 'phone_down') {
+        updateStatus('danger', '📱 CELULAR NO COLO / OLHANDO PARA BAIXO!');
+        sensorPhone.innerText = 'MEXENDO NO CELULAR';
+        sensorPhone.style.color = 'var(--alert-red)';
+        sensorHead.innerText = 'OLHANDO P/ BAIXO';
+        sensorHead.style.color = 'var(--alert-red)';
+        blindDistanceDisplay.innerText = '58.0 m';
+        playBeepWarning();
+        speakVoiceAlert('Infração: olhar para baixo detectado! Largue o celular e olhe para a pista!');
+      } else if (state === 'distracted') {
+        updateStatus('warn', '👀 DISTRAÇÃO: OLHE PARA A PISTA!');
+        sensorHead.innerText = 'OLHANDO LATERAL';
+        sensorHead.style.color = 'var(--warn-yellow)';
+        playBeepWarning();
+        speakVoiceAlert('Mantenha o foco e os olhos na pista.');
+      } else if (state === 'phone') {
+        updateStatus('danger', '📱 INFRAÇÃO GRAVE: CELULAR NO OUVIDO!');
+        sensorPhone.innerText = 'EM LIGAÇÃO / CELULAR';
+        sensorPhone.style.color = 'var(--alert-red)';
+        playSirenAlert();
+        speakVoiceAlert('Infração gravíssima: celular ao volante! Solte o aparelho.');
+      } else if (state === 'nodding') {
+        updateStatus('danger', '⚡ CABEÇA DESABANDO! COCHILO PROFUNDO!');
+        sensorNod.innerText = 'DESABOU (TRANCO)';
+        sensorNod.style.color = 'var(--alert-red)';
+        blindDistanceDisplay.innerText = '35.2 m';
+        playCarHorn();
+        speakVoiceAlert('Alerta de emergência: condutor cochilando!');
+      } else if (state === 'absent') {
+        updateStatus('danger', '👤 CONDUTOR AUSENTE / MAL SÚBITO!');
+        sensorDriver.innerText = 'DESMAIO / AUSENTE';
+        sensorDriver.style.color = 'var(--alert-red)';
+        blindDistanceDisplay.innerText = '66.0 m';
+        playSirenAlert();
+        speakVoiceAlert('Alerta crítico: motorista inconsciente ou ausente da direção!');
+      } else if (state === 'fatigue') {
+        triggerFatigueAlert();
+      }
+
+      setTimeout(() => {
+        isSimulating = false;
+      }, 4500);
+    }
+
+    // =========================================================================
+    // INICIALIZAÇÃO DA CÂMERA E MEDIAPIPE FACE MESH
+    // =========================================================================
+    async function initArgosDriver() {
+      startModal.style.display = 'none';
+      aiStatus.innerHTML = '<span style="color:#00f0ff;">Carregando MediaPipe Face Mesh...</span>';
+
+      try {
+        faceMesh = new FaceMesh({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+        });
+
+        faceMesh.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.6,
+          minTrackingConfidence: 0.6
+        });
+
+        faceMesh.onResults(onFaceMeshResults);
+
+        camera = new Camera(video, {
+          onFrame: async () => {
+            if (video.videoWidth) {
+              await faceMesh.send({ image: video });
+            }
+          },
+          width: 1280,
+          height: 720
+        });
+
+        await camera.start();
+        startDrivingTimer();
+        speakVoiceAlert('Simulador Argos Driver iniciado. Sentinela de fadiga monitorando a cabine.');
+      } catch (err) {
+        console.error('Erro ao iniciar MediaPipe Face Mesh:', err);
+        alert('Não foi possível acessar a câmera ou carregar o Face Mesh. Verifique permissões e recarregue a página.');
+      }
+    }
+
+    startBtn.addEventListener('click', initArgosDriver);
+  </script>
+</body>
+</html>
